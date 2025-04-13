@@ -198,12 +198,5 @@ public class ProductController : ControllerBase
     public ActionResult Logout()
     {
         return Ok(new { message = "Succesfully logout" });
-    }
-
-    [Authorize]
-    [HttpGet]
-    public ActionResult LetmeKnow()
-    {
-        return Ok(new { message = "Succesfully commit Change" });
-    }
+    }    
 }
