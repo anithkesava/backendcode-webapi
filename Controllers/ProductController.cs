@@ -23,6 +23,14 @@ public class ProductController : ControllerBase
 
     private readonly IConfiguration _config;
 
+    public ProductController(AppDbContext appDbContext,
+       IConfiguration config, IUserRepository userRepository)
+    {
+        this._appDbContext = appDbContext;
+        this._config = config;
+        this._userRepository = userRepository;
+    }
+
     [Authorize]
     [HttpGet("CurrentUser")]
     public ActionResult Currentuser()
@@ -68,14 +76,6 @@ public class ProductController : ControllerBase
         return Ok(users);
     }
 
-    public ProductController(AppDbContext appDbContext,
-        IConfiguration config, IUserRepository userRepository)
-    {
-        this._appDbContext = appDbContext;
-        this._config = config;
-        this._userRepository = userRepository;
-    }
-
     [NonAction]
     public string GenerateToken(Users user)
     {
@@ -97,7 +97,7 @@ public class ProductController : ControllerBase
             {
             new Claim(ClaimTypes.Name,user.UserName),
             new Claim(ClaimTypes.Role ,user.Roles)
-        };
+            };
 
             var token = new JwtSecurityToken
                 (
@@ -198,5 +198,5 @@ public class ProductController : ControllerBase
     public ActionResult Logout()
     {
         return Ok(new { message = "Succesfully logout" });
-    }    
+    }
 }

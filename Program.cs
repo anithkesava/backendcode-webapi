@@ -22,7 +22,6 @@ namespace MyFirstWebAPI
             option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddScoped<IUserRepository, UserRepository>();
-            builder.Services.AddScoped<IUserService, UserService>();
 
             builder.Logging.ClearProviders();
             builder.Logging.AddConsole();
@@ -79,12 +78,11 @@ namespace MyFirstWebAPI
 
             builder.Services.AddAuthorization();
 
+          
             //HERE AFTER MIDDLEWARE PIPELINE
 
             var app = builder.Build();
 
-
-            
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment()) // if this is an development enviroment then, can use the swagger
             {
@@ -96,10 +94,12 @@ namespace MyFirstWebAPI
             Console.WriteLine("The Environment : " + app.Environment.EnvironmentName);
 
             app.UseHttpsRedirection(); // used to redirect the http to https for extra security
+           
+
+            // we need to use the cors right here. 
 
             app.UseAuthentication();
             app.UseAuthorization(); // used for authorize attribute and before using this make sure to use the authentication 
-
 
             app.MapControllers(); // used to correctly map the route to respective controller/action
 
