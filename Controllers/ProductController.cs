@@ -199,4 +199,11 @@ public class ProductController : ControllerBase
     {
         return Ok(new { message = "Succesfully logout" });
     }
+
+    [Authorize]
+    [HttpGet]
+    public ActionResult LetmeKnow()
+    {
+        return Ok(new { message = "Succesfully commit Change" });
+    }
 }
