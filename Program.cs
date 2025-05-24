@@ -1,11 +1,14 @@
-﻿using Microsoft.AspNetCore.Authentication.BearerToken;
+﻿using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MyFirstWebAPI.CustomMiddlewares;
 using MyFirstWebAPI.DesignPattern.ProductPattern;
 using MyFirstWebAPI.EntityDB;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Text;
 
 namespace MyFirstWebAPI
@@ -23,10 +26,30 @@ namespace MyFirstWebAPI
 
             builder.Services.AddScoped<IUserRepository, UserRepository>();
 
+            //the versioning service registeration happens here 
+
+            builder.Services.AddApiVersioning(options =>      // for api versioning
+            {
+                options.DefaultApiVersion = new ApiVersion(1, 0);
+                options.AssumeDefaultVersionWhenUnspecified = true;
+                options.ReportApiVersions = true;
+            });
+
+            builder.Services.AddVersionedApiExplorer(options =>
+            {
+                options.GroupNameFormat = "'v'VVV"; // shows v1, v2 etc.
+                options.SubstituteApiVersionInUrl = true;
+            });
+
+
+           
             builder.Logging.ClearProviders();
             builder.Logging.AddConsole();
 
             builder.Services.AddEndpointsApiExplorer(); //register the api end point which is useful to the swagger to discover the api's endpoint
+                                                        //register swagger for each version. 
+
+            builder.Services.AddTransient<IApiVersionDescriptionProvider, DefaultApiVersionDescriptionProvider>();
 
             builder.Services.AddSwaggerGen(c =>
             {
@@ -88,15 +111,21 @@ namespace MyFirstWebAPI
             {
                 //app.UseDeveloperExceptionPage();
                 app.UseSwagger(); // for json generation
-                app.UseSwaggerUI(); // for user friendly UI for json
+                app.UseSwaggerUI(options =>
+                {
+                    var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+                    foreach (var description in provider.ApiVersionDescriptions)
+                    {
+                        options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
+                    }
+                });  // for user friendly UI for json
             }
+
             app.UseMiddleware<GlobalException>();
             Console.WriteLine("The Environment : " + app.Environment.EnvironmentName);
 
             app.UseHttpsRedirection(); // used to redirect the http to https for extra security
            
-
-            // we need to use the cors right here. 
 
             app.UseAuthentication();
             app.UseAuthorization(); // used for authorize attribute and before using this make sure to use the authentication 
