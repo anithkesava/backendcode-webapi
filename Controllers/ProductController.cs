@@ -10,24 +10,17 @@ using MyFirstWebAPI.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-
 namespace MyFirstWebAPI.Controllers.V1
 {
-
     [ApiController]
-    [Route("api/v{version:apiVersion}/[controller]")]
-    [ApiVersion("1.0")]
-
+    [Route("api/[controller]")]
     //[ApiController]
     //[Route("api/[controller]")]
     public class ProductController : ControllerBase
     {
         private readonly AppDbContext _appDbContext;
-
         private readonly IUserRepository _userRepository;
-
         private readonly IConfiguration _config;
-
         public ProductController(AppDbContext appDbContext,
            IConfiguration config, IUserRepository userRepository)
         {
@@ -35,7 +28,6 @@ namespace MyFirstWebAPI.Controllers.V1
             this._config = config;
             this._userRepository = userRepository;
         }
-
         [Authorize]
         [HttpGet("CurrentUser")]
         public ActionResult Currentuser()
@@ -46,7 +38,6 @@ namespace MyFirstWebAPI.Controllers.V1
             }
             return Ok(new { message = $" UserName: {CurrentUser.UserName}" });
         }
-
         [AllowAnonymous]
         [HttpPost("Login")]
         public ActionResult Login([FromBody] Users users)
@@ -68,7 +59,6 @@ namespace MyFirstWebAPI.Controllers.V1
                 return NotFound();
             }
         }
-
         [AllowAnonymous]
         [HttpGet]
         public ActionResult GetAllUsers()
@@ -80,7 +70,6 @@ namespace MyFirstWebAPI.Controllers.V1
             }
             return Ok(users);
         }
-
         [NonAction]
         public string GenerateToken(Users user)
         {
@@ -95,15 +84,13 @@ namespace MyFirstWebAPI.Controllers.V1
                     Console.WriteLine("Some Configuration Cannot be Read from JSon File ");
                 }
 
-                var Key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["jwt:Key"]));
+                var Key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
                 var credential = new SigningCredentials(Key, SecurityAlgorithms.HmacSha256);
-
                 var claims = new[]
-                {
-            new Claim(ClaimTypes.Name,user.UserName),
-            new Claim(ClaimTypes.Role ,user.Roles)
-            };
-
+                    {
+                    new Claim(ClaimTypes.Name,user.UserName),
+                    new Claim(ClaimTypes.Role ,user.Roles)
+                    };
                 var token = new JwtSecurityToken
                     (
                     issuer: _config["jwt:Issuer"],
@@ -111,9 +98,7 @@ namespace MyFirstWebAPI.Controllers.V1
                     claims: claims,
                     signingCredentials: credential,
                     expires: DateTime.Now.AddMinutes(30)
-
                     );
-
                 return new JwtSecurityTokenHandler().WriteToken(token);
             }
             catch (Exception e)
@@ -121,7 +106,6 @@ namespace MyFirstWebAPI.Controllers.V1
                 return "The Token Genaration is Fails " + e.Message;
             }
         }
-
         [Authorize(Roles = Roles.Admin)]
         [HttpPost("admin")]
         public ActionResult AddUsers([FromBody] Users users)
@@ -141,13 +125,13 @@ namespace MyFirstWebAPI.Controllers.V1
             var message = new { mes = "User Added Succesfully" };
             return Ok(message);
         }
+        public enum Roll { Admin}
 
-        [Authorize(Roles = Roles.Admin)]
+        [Authorize(Roles = nameof(Roll.Admin))]
         [HttpPut("EditUserRole")]
         public ActionResult EditRole([FromBody] UserRole users, string name)
         {
             var userdetails = _appDbContext.UsersData.Where(x => x.UserName == name).FirstOrDefault();
-
             if (userdetails != null)
             {
                 userdetails.Roles = users.Userrole;
@@ -159,7 +143,6 @@ namespace MyFirstWebAPI.Controllers.V1
                 return NotFound(new { message = "User not exists" });
             }
         }
-
         [Authorize(Roles = Roles.Admin)]
         [HttpDelete("DeleteUser")]
         public ActionResult DeleteUser(int id)
@@ -177,7 +160,6 @@ namespace MyFirstWebAPI.Controllers.V1
                 return NotFound(new { message = $"user not exists" });
             }
         }
-
         [HttpDelete("DeleteAll")]
         [Authorize(Roles = Roles.Admin)]
         public ActionResult DeleteAllUsers()
@@ -197,7 +179,6 @@ namespace MyFirstWebAPI.Controllers.V1
                 return NotFound(new { message = "user does not exists to remove" });
             }
         }
-
         [Authorize]
         [HttpDelete("Logout")]
         public ActionResult Logout()
@@ -206,7 +187,6 @@ namespace MyFirstWebAPI.Controllers.V1
         }
     }
 }
-
 namespace MyFirstWebAPI.Controllers.V2
 {
     [ApiController]
@@ -221,5 +201,4 @@ namespace MyFirstWebAPI.Controllers.V2
             return Ok(new { message = " The Current user api end point from the v2 Controller" });
         }
     }
-
 }

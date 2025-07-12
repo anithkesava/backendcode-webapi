@@ -10,7 +10,6 @@ using MyFirstWebAPI.DesignPattern.ProductPattern;
 using MyFirstWebAPI.EntityDB;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Text;
-
 namespace MyFirstWebAPI
 {
     public class Program
@@ -18,39 +17,27 @@ namespace MyFirstWebAPI
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args); // creating an instance for the web application to host, log, configure and registered the build in DI.
-
             builder.Services.AddControllers();  //register not only the controller whole web api execution system.
-
             builder.Services.AddDbContext<AppDbContext>(option =>
             option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
             builder.Services.AddScoped<IUserRepository, UserRepository>();
-
             //the versioning service registeration happens here 
-
             builder.Services.AddApiVersioning(options =>      // for api versioning
             {
                 options.DefaultApiVersion = new ApiVersion(1, 0);
                 options.AssumeDefaultVersionWhenUnspecified = true;
                 options.ReportApiVersions = true;
             });
-
             builder.Services.AddVersionedApiExplorer(options =>
             {
                 options.GroupNameFormat = "'v'VVV"; // shows v1, v2 etc.
                 options.SubstituteApiVersionInUrl = true;
             });
-
-
-           
             builder.Logging.ClearProviders();
             builder.Logging.AddConsole();
-
             builder.Services.AddEndpointsApiExplorer(); //register the api end point which is useful to the swagger to discover the api's endpoint
                                                         //register swagger for each version. 
-
             builder.Services.AddTransient<IApiVersionDescriptionProvider, DefaultApiVersionDescriptionProvider>();
-
             builder.Services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo
@@ -58,7 +45,6 @@ namespace MyFirstWebAPI
                     Title = "MyFirstWebAPI",
                     Version = "v1"
                 });
-
                 // ✅ Add JWT Authentication to Swagger
                 var jwtSecurityScheme = new OpenApiSecurityScheme
                 {
@@ -75,13 +61,11 @@ namespace MyFirstWebAPI
                     }
                 };
                 c.AddSecurityDefinition(jwtSecurityScheme.Reference.Id, jwtSecurityScheme);
-
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
                     { jwtSecurityScheme, Array.Empty<string>() }
                 });
             });
-
             //added the authentication for authentication and authorization for JWT token
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
@@ -98,40 +82,23 @@ namespace MyFirstWebAPI
                             Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
                     };
                 });
-
             builder.Services.AddAuthorization();
-
-          
             //HERE AFTER MIDDLEWARE PIPELINE
-
             var app = builder.Build();
-
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment()) // if this is an development enviroment then, can use the swagger
             {
                 //app.UseDeveloperExceptionPage();
                 app.UseSwagger(); // for json generation
-                app.UseSwaggerUI(options =>
-                {
-                    var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
-                    foreach (var description in provider.ApiVersionDescriptions)
-                    {
-                        options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
-                    }
-                });  // for user friendly UI for json
+                app.UseSwaggerUI();  // for user friendly UI for json
             }
 
             app.UseMiddleware<GlobalException>();
             Console.WriteLine("The Environment : " + app.Environment.EnvironmentName);
-
             app.UseHttpsRedirection(); // used to redirect the http to https for extra security
-           
-
             app.UseAuthentication();
             app.UseAuthorization(); // used for authorize attribute and before using this make sure to use the authentication 
-
             app.MapControllers(); // used to correctly map the route to respective controller/action
-
             app.Run(); // used to run the application to go live
         }
     }
